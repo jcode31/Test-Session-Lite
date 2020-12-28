@@ -1,0 +1,228 @@
+import os, glob
+import pandas as pd
+import numpy as np
+import csv
+
+fname = input("Enter file name:")
+if (len(fname) < 1): fname = 'BJMock1Reading'
+fnamepath = "/Users/johnnyyang/Documents/Programming/Projects/Test Session Lite/Test Session Lite v1.1/" + fname
+
+fnamedf = pd.read_csv(fnamepath + '.csv')
+
+# Mark student answers.
+for column in fnamedf:
+    # Select column contents by column name using [] operator.
+    if column == 'Question': continue # Skips 'Answers' and goes to student columns.
+    if column == 'Key': continue # Skips 'Question' and goes to student columns.
+    columnseriesobj = fnamedf[column] # df[column]
+    # print('Columnseriesobj type: ', type(columnseriesobj)) # <-- For reference.
+    ans = columnseriesobj.values
+    # print(type(ans))
+    # print('Name: ', column)
+    # print('Answers: ', ans)
+    comparecol = np.where(fnamedf["Key"] == fnamedf[column], True, False)
+    fnamedf[column + '(check)'] = comparecol # Adds new column to df with student name + "check". Contains True/False values.
+#     print(fnamedf)
+
+# Tally student scores.
+for column in fnamedf:
+    if '(check)' not in column: continue
+    columnseriesobj = fnamedf[column]
+    # print('Name(check): ', column)
+    # print('Check: ', columnseriesobj.values)
+    checkstatus = columnseriesobj.values
+    correct = 0
+    incorrect = 0
+    for k in checkstatus:
+        if k == True:
+            correct = correct + 1
+        if k == False:
+            incorrect = incorrect + 1
+    # print(column)
+    # print('Correct: ', correct)
+    # print('Incorrect: ', incorrect)
+
+# Iterate through each question (going down first colummn of df)
+netincorrlist = []
+for index, row in fnamedf.iterrows():
+    # print(row['jack(check)']) <-- Sanity check.
+# For each row, iterate through "(check)" columns and count instances of False. Assign integer value to that question number.
+    incorrect = 0
+    incorrlist = []
+    for column in fnamedf:
+        if '(check)' not in column: continue
+        if row[column] == False:
+            incorrect = incorrect + 1
+        # print(incorrect)
+        incorrlist.append(incorrect)
+    # print(incorrlist)
+    netincorrlist.append(incorrlist[-1]) #<-- [-1] index means the last item. Neg index means count from right.
+# print(netincorrlist)
+    # print(row['jack(check)']) <-- Sanity check.
+# End up with "Missed" dictionary or list of question numbers and number of instances of False (students who got it wrong).
+# Add 'Missed' column to end of df. This is just the "Missed" dictionary.
+fnamedf['Missed'] = netincorrlist
+# print(fnamedf)
+
+
+
+# Set different df's for specific analysis.
+# Maybe not that useful in practice. Maybe more useful with large student numbers.
+# Allows me to filter questions that had more than a certain number of students get wrong.
+answers = fnamedf
+commwrongcols = []
+for column in fnamedf:
+    if '(check)' in column: continue
+    commwrongcols.append(column)
+# print('this is commwrongcols list;', commwrongcols) <-- Sanity check
+missed = fnamedf[commwrongcols]
+above1 = missed[missed["Missed"] > 1]
+above2 = missed[missed["Missed"] > 2]
+above3 = missed[missed["Missed"] > 3]
+above4 = missed[missed["Missed"] > 4]
+above5 = missed[missed["Missed"] > 5]
+above6 = missed[missed["Missed"] > 6]
+above7 = missed[missed["Missed"] > 7]
+above8 = missed[missed["Missed"] > 8]
+above9 = missed[missed["Missed"] > 9]
+
+# mostmissed = missed.sort_values(by="Missed", ascending = False).head()
+mostmissed = missed.sort_values(by="Missed", ascending = False)
+
+# Most Commonly Chosen Wrong Answer Choices
+# Takes mostmissed and resets the index to start at 0.
+# This way, I can specify the 3 most missed questions by using index 0, 1, 2.
+mostmissedreset = mostmissed.reset_index()
+# mostmissedreset.head() <-- Sanity check
+firstmost = mostmissedreset[mostmissedreset.index==0].squeeze()
+secondmost = mostmissedreset[mostmissedreset.index==1].squeeze()
+thirdmost = mostmissedreset[mostmissedreset.index==2].squeeze()
+fourthmost = mostmissedreset[mostmissedreset.index==3].squeeze()
+fifthmost = mostmissedreset[mostmissedreset.index==4].squeeze()
+
+# firstmost
+# Dictionary called "counts1"
+firstmostlist = firstmost.values.tolist()
+# for k in firstmostlist:
+#     print(type(k)) <--Sanity check
+# Create new list of only answers after filtering out the question number and number missed.
+stringlist1 = list(filter(lambda x: type(x)==str, firstmostlist))
+# print(stringlist1) #<-- Sanity check
+# Create new list of only WRONG answers.
+firstmostwrong = []
+for k in stringlist1:
+    if k != stringlist1[0]:
+        firstmostwrong.append(k)
+# print(firstmostwrong) <-- Sanity check
+# Create dictionary of wrong answers chosen.
+counts1 = {}
+for k in firstmostwrong:
+    if k not in counts1:
+        counts1[k] = 1
+    else:
+        counts1[k] = counts1[k] + 1
+# print(counts1) <-- Sanity check
+
+# secondmost.
+# Dictionary called "counts2"
+secondmostlist = secondmost.values.tolist()
+# for k in secondmostlist:
+#     print(type(k)) <--Sanity check
+# Create new list of only answers after filtering out the question number and number missed.
+stringlist2 = list(filter(lambda x: type(x)==str, secondmostlist))
+# print(stringlist2) #<-- Sanity check
+# Create new list of only WRONG answers.
+secondmostwrong = []
+for k in stringlist2:
+    if k != stringlist2[0]:
+        secondmostwrong.append(k)
+# print(secondmostwrong) <-- Sanity check
+# Create dictionary of wrong answers chosen.
+counts2 = {}
+for k in secondmostwrong:
+    if k not in counts2:
+        counts2[k] = 1
+    else:
+        counts2[k] = counts2[k] + 1
+# print(counts1) <-- Sanity check
+
+# thirdmost.
+# Dictionary called "counts3"
+thirdmostlist = thirdmost.values.tolist()
+# for k in thirdmostlist:
+#     print(type(k)) <--Sanity check
+# Create new list of only answers after filtering out the question number and number missed.
+stringlist3 = list(filter(lambda x: type(x)==str, thirdmostlist))
+# print(stringlist3) #<-- Sanity check
+# Create new list of only WRONG answers.
+thirdmostwrong = []
+for k in stringlist3:
+    if k != stringlist3[0]:
+        thirdmostwrong.append(k)
+# print(thirdmostwrong) <-- Sanity check
+# Create dictionary of wrong answers chosen.
+counts3 = {}
+for k in thirdmostwrong:
+    if k not in counts3:
+        counts3[k] = 1
+    else:
+        counts3[k] = counts3[k] + 1
+# print(counts1) <-- Sanity check
+
+# fourthmost.
+# Dictionary called "counts4"
+fourthmostlist = fourthmost.values.tolist()
+# for k in fourthmostlist:
+#     print(type(k)) <--Sanity check
+# Create new list of only answers after filtering out the question number and number missed.
+stringlist4 = list(filter(lambda x: type(x)==str, fourthmostlist))
+# print(stringlist4) #<-- Sanity check
+# Create new list of only WRONG answers.
+fourthmostwrong = []
+for k in stringlist4:
+    if k != stringlist4[0]:
+        fourthmostwrong.append(k)
+# print(fourthmostwrong) <-- Sanity check
+# Create dictionary of wrong answers chosen.
+counts4 = {}
+for k in fourthmostwrong:
+    if k not in counts4:
+        counts4[k] = 1
+    else:
+        counts4[k] = counts4[k] + 1
+# print(counts4) <-- Sanity check
+
+# fifthmost.
+# Dictionary called "counts5"
+fifthmostlist = fifthmost.values.tolist()
+# for k in fifthmostlist:
+#     print(type(k)) <--Sanity check
+# Create new list of only answers after filtering out the question number and number missed.
+stringlist5 = list(filter(lambda x: type(x)==str, fifthmostlist))
+# print(stringlist5) #<-- Sanity check
+# Create new list of only WRONG answers.
+fifthmostwrong = []
+for k in stringlist5:
+    if k != stringlist5[0]:
+        fifthmostwrong.append(k)
+# print(fifthmostwrong) <-- Sanity check
+# Create dictionary of wrong answers chosen.
+counts5 = {}
+for k in fifthmostwrong:
+    if k not in counts5:
+        counts5[k] = 1
+    else:
+        counts5[k] = counts5[k] + 1
+# print(counts5) <-- Sanity check
+
+groupreportprehide = mostmissed[mostmissed["Missed"] > 0]
+## Above code not needed because can just do below code:
+print(groupreportprehide.to_string(index=False))
+## Below code shows df in Jupyter without index.
+#groupreport = groupreportprehide.style.hide_index()
+
+
+# print("Options:\nanswers.head(): View complete df\nmissed.head(): View answers only\nmostmissed.head(): View ranked by most missed\ncounts(n): View most commonly chosen answer choices for nth hardest question\nabove(n): View all questions missed by at least n students")
+
+## Below is the option provided when running on Jupyter.
+# print("Options:\ngroupreport: View most commonly missed questions\ncounts(n): View most commonly chosen answer choices for nth hardest question")
